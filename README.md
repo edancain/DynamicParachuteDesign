@@ -1,2 +1,4 @@
-# ParachuteDesign
-C# based backend with React frontend UI.
+# Parachute Design
+Typescript / React application for advanced mathematical calculations for Parachute Design
+
+![My Image](/images/Edan Cain.jpg)
