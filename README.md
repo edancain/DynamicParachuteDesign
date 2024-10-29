@@ -1,4 +1,4 @@
 # Parachute Design
 Typescript / React application for advanced mathematical calculations for Parachute Design
 
-![My Image](/images/Edan Cain.jpg)
+![Edan Cain](my-parachute-calculator/images/Edan%20Cain.jpg)
