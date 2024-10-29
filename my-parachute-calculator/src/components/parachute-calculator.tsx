@@ -15,9 +15,35 @@ const ParachuteCalculator = () => {
   const [graphHeight, setGraphHeight] = useState(64);
   const [currentSpeed, setCurrentSpeed] = useState(0);
   const [activeTab, setActiveTab] = useState('topView');
+  const [selectedMaterial, setSelectedMaterial] = useState<'ripstop' | 'ballistic'>('ripstop');
+
+  const materials = {
+    ripstop: {
+      name: "1.1oz Ripstop Nylon",
+      maxLoad: 40,
+      recommended: "Ideal for lightweight applications up to 150 lbs",
+      permeability: "0-3 CFM",
+      seamType: "French fell seam"
+    },
+    ballistic: {
+      name: "1.9oz Ballistic Nylon",
+      maxLoad: 70,
+      recommended: "Heavy duty applications up to 200 lbs",
+      permeability: "0-1 CFM",
+      seamType: "Flat fell seam"
+    }
+  };
+
+  const calculateMaxLoad = () => {
+    const velocity = calculateTerminalVelocity();
+    const force = weight * (velocity / 32.2);
+    const circumference = Math.PI * diameter;
+    const loadPerInch = force / circumference;
+    return loadPerInch.toFixed(1);
+  };
 
   const toMetric = (value: number, unit: string) => {
-    switch(unit) {
+    switch (unit) {
       case 'weight':
         return (value * 0.453592).toFixed(1);
       case 'length':
@@ -31,13 +57,13 @@ const ParachuteCalculator = () => {
 
   const getAirDensity = (alt: number) => {
     const rho0 = 0.002378;
-    return rho0 * Math.exp(-alt/30000);
+    return rho0 * Math.exp(-alt / 30000);
   };
 
   const calculateTerminalVelocity = () => {
     const rho = getAirDensity(altitude);
-    const mainArea = Math.PI * Math.pow(diameter/2, 2);
-    const ventArea = Math.PI * Math.pow(ventDiameter/2, 2);
+    const mainArea = Math.PI * Math.pow(diameter / 2, 2);
+    const ventArea = Math.PI * Math.pow(ventDiameter / 2, 2);
     const effectiveArea = mainArea - ventArea;
     return Math.sqrt((2 * weight) / (rho * 1.75 * effectiveArea));
   };
@@ -71,9 +97,9 @@ const ParachuteCalculator = () => {
       const dx = cellWidthBottom;
       const dy = cellHeight * Math.PI * Math.cos(Math.PI * t);
       const normalAngle = Math.atan2(dy, dx);
-      
-      const seamX = x + seamAllowance * Math.cos(normalAngle + Math.PI/2);
-      const seamY = y + seamAllowance * Math.sin(normalAngle + Math.PI/2);
+
+      const seamX = x + seamAllowance * Math.cos(normalAngle + Math.PI / 2);
+      const seamY = y + seamAllowance * Math.sin(normalAngle + Math.PI / 2);
 
       points.push({
         x: Number(isMetric ? toMetric(seamX, 'length') : seamX.toFixed(2)),
@@ -88,7 +114,7 @@ const ParachuteCalculator = () => {
       type: 'reference',
       label: `Top Width: ${isMetric ? toMetric(cellWidthTop, 'length') : cellWidthTop.toFixed(2)}`
     });
-    
+
     return points;
   };
 
@@ -116,8 +142,8 @@ const ParachuteCalculator = () => {
       <div className="bg-blue-50 p-4 rounded-lg text-center mb-6">
         <h3 className="text-lg font-medium">Fall Speed</h3>
         <p className="text-3xl font-bold text-blue-600">
-          {isMetric ? 
-            `${toMetric(currentSpeed, 'speed')} m/s` : 
+          {isMetric ?
+            `${toMetric(currentSpeed, 'speed')} m/s` :
             `${currentSpeed.toFixed(1)} ft/s`}
         </p>
       </div>
@@ -207,6 +233,25 @@ const ParachuteCalculator = () => {
         </div>
       </div>
 
+      <div className="p-4 bg-slate-50 rounded-lg">
+        <h3 className="font-medium mb-2">Material Specifications</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <select
+            className="p-2 border rounded"
+            value={selectedMaterial}
+            onChange={(e) => setSelectedMaterial(e.target.value as "ripstop" | "ballistic")}
+          >
+            <option value="ripstop">1.1oz Ripstop Nylon</option>
+            <option value="ballistic">1.9oz Ballistic Nylon</option>
+          </select>
+          <div>
+            <p className="text-sm">Max Load: {materials[selectedMaterial].maxLoad} lbs/inch</p>
+            <p className="text-sm">Current Load: {calculateMaxLoad()} lbs/inch</p>
+            <p className="text-sm">{materials[selectedMaterial].recommended}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div className="flex space-x-2">
@@ -236,23 +281,23 @@ const ParachuteCalculator = () => {
             <svg viewBox="-110 -110 220 220" className="w-full h-full">
               <line x1="-100" y1="0" x2="100" y2="0" stroke="#ddd" strokeWidth="0.5" />
               <line x1="0" y1="-100" x2="0" y2="100" stroke="#ddd" strokeWidth="0.5" />
-              
+
               <circle
                 cx="0"
                 cy="0"
-                r={(ventDiameter/diameter) * 100}
+                r={(ventDiameter / diameter) * 100}
                 fill="white"
                 stroke="black"
                 strokeWidth="2"
               />
-              
+
               {Array.from({ length: cells }).map((_, i) => {
                 const angle = (i * 360) / cells;
                 const radians = (angle * Math.PI) / 180;
                 const x1 = Math.cos(radians) * 100;
                 const y1 = Math.sin(radians) * 100;
-                const x2 = Math.cos(radians) * ((ventDiameter/diameter) * 100);
-                const y2 = Math.sin(radians) * ((ventDiameter/diameter) * 100);
+                const x2 = Math.cos(radians) * ((ventDiameter / diameter) * 100);
+                const y2 = Math.sin(radians) * ((ventDiameter / diameter) * 100);
                 return (
                   <g key={i}>
                     <line
@@ -274,7 +319,7 @@ const ParachuteCalculator = () => {
                   </g>
                 );
               })}
-              
+
               <circle
                 cx="0"
                 cy="0"
@@ -290,17 +335,17 @@ const ParachuteCalculator = () => {
             <ResponsiveContainer>
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <CartesianGrid />
-                <XAxis 
-                  dataKey="x" 
-                  type="number" 
+                <XAxis
+                  dataKey="x"
+                  type="number"
                   label={{ value: `Width (${isMetric ? 'm' : 'ft'})`, position: 'bottom' }}
                 />
-                <YAxis 
-                  dataKey="y" 
+                <YAxis
+                  dataKey="y"
                   type="number"
                   label={{ value: `Height (${isMetric ? 'm' : 'ft'})`, angle: -90, position: 'left' }}
                 />
-                <Tooltip 
+                <Tooltip
                   content={({ payload }) => {
                     if (payload && payload[0]) {
                       const point = payload[0].payload;
@@ -321,21 +366,21 @@ const ParachuteCalculator = () => {
                     return null;
                   }}
                 />
-                <Scatter 
+                <Scatter
                   name="Main Pattern"
-                  data={generateCellPattern().filter(p => p.type === 'main')} 
+                  data={generateCellPattern().filter(p => p.type === 'main')}
                   fill="#2563eb"
                   line
                 />
-                <Scatter 
+                <Scatter
                   name="Seam Allowance"
-                  data={generateCellPattern().filter(p => p.type === 'seam')} 
+                  data={generateCellPattern().filter(p => p.type === 'seam')}
                   fill="#dc2626"
                   line
                 />
-                <Scatter 
+                <Scatter
                   name="Reference Points"
-                  data={generateCellPattern().filter(p => p.type === 'reference')} 
+                  data={generateCellPattern().filter(p => p.type === 'reference')}
                   fill="#059669"
                   shape="star"
                 />
